@@ -7,15 +7,15 @@ export const connectDB = async () => {
   
   try {
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 1500,
+      serverSelectionTimeoutMS: 8000,
     });
     isConnected = true;
     console.log(`[TrioVault DB] MongoDB Connected: ${conn.connection.host}`);
     return true;
   } catch (error) {
     console.warn(`[TrioVault DB] MongoDB Connection Notice: Could not connect to ${uri}`);
+    console.warn(`[TrioVault DB] Details: ${error.message}`);
     console.warn(`[TrioVault DB] Note: Running with high-availability in-memory replica store.`);
-    console.warn(`[TrioVault DB] For persistent cloud storage, set MONGODB_URI in backend/.env`);
     isConnected = false;
     return false;
   }
