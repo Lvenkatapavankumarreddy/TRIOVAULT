@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="vaultGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="24" fill="url(#vaultGrad)"/>
+  <path d="M30 45 C30 35 38 28 50 28 C62 28 70 35 70 45 V52 H30 Z" fill="white" fill-opacity="0.2"/>
+  <rect x="25" y="48" width="50" height="34" rx="8" fill="white"/>
+  <circle cx="50" cy="62" r="5" fill="#1e3a8a"/>
+  <path d="M50 67 V74" stroke="#1e3a8a" stroke-width="3" stroke-linecap="round"/>
+  <path d="M35 48 V42 C35 34 41 28 50 28 C59 28 65 34 65 42 V48" stroke="white" stroke-width="4.5" stroke-linecap="round"/>
+</svg>

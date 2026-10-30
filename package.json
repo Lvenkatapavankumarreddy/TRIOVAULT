@@ -1,0 +1,12 @@
+{
+  "name": "triovault-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TrioVault – Private Shared Cloud Storage for Three Friends",
+  "scripts": {
+    "start:backend": "cd backend && node server.js",
+    "start:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "test:backend": "cd backend && node tests/runTestSuiteInProcess.js"
+  }
+}
