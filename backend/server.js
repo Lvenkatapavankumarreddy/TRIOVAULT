@@ -1,4 +1,12 @@
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables from backend/.env or root .env
+dotenv.config({ path: path.join(__dirname, '.env') });
 dotenv.config();
 
 import express from 'express';
@@ -86,8 +94,6 @@ app.use((err, req, res, next) => {
     message: err.message || 'An unexpected server error occurred.',
   });
 });
-
-import { fileURLToPath } from 'url';
 
 // 8. Bootstrap and Listen
 export const startServer = () => {

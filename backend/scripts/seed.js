@@ -24,3 +24,4 @@ runSeed().catch((err) => {
   console.error('[TrioVault Seed] Error seeding database:', err);
   process.exit(1);
 });
+

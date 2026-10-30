@@ -66,3 +66,4 @@ export const formatBytes = (bytes, decimals = 2) => {
 export const sanitizeFileName = (fileName) => {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
 };
+

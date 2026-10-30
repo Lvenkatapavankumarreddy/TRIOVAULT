@@ -29,3 +29,4 @@ export const requireAuth = (req, res, next) => {
   req.sessionUser = payload;
   next();
 };
+

@@ -253,3 +253,4 @@ export const ActivityPage = () => {
     </div>
   );
 };
+

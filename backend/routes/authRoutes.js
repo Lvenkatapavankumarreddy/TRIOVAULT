@@ -21,3 +21,4 @@ router.post('/lock', lockVault);
 router.get('/session', getSessionStatus);
 
 export default router;
+

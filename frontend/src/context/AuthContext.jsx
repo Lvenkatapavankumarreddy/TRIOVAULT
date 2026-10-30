@@ -1,45 +1,97 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { authApi } from '../services/api';
 
 const AuthContext = createContext();
 
+// Auto-lock after 10 minutes of inactivity
+const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
+
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const idleTimerRef = useRef(null);
+
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+    }
+    idleTimerRef.current = setTimeout(() => {
+      // Auto lock on inactivity
+      sessionStorage.removeItem('triovault_tab_unlocked');
+      setIsAuthenticated(false);
+      authApi.lock().catch(() => {});
+    }, INACTIVITY_TIMEOUT_MS);
+  }, []);
 
   const checkSession = useCallback(async () => {
     try {
       setIsLoading(true);
+      // Require unlock per visit: if not unlocked in this active tab session, prompt for password
+      const tabUnlocked = sessionStorage.getItem('triovault_tab_unlocked') === 'true';
+      if (!tabUnlocked) {
+        setIsAuthenticated(false);
+        setIsLoading(false);
+        return;
+      }
+
       const res = await authApi.getSession();
       if (res.data?.authenticated) {
         setIsAuthenticated(true);
+        resetIdleTimer();
       } else {
+        sessionStorage.removeItem('triovault_tab_unlocked');
         setIsAuthenticated(false);
       }
     } catch (err) {
+      sessionStorage.removeItem('triovault_tab_unlocked');
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [resetIdleTimer]);
 
   useEffect(() => {
     checkSession();
 
     // Listen for custom 401 unauth events from api interceptor
     const handleUnauthorized = () => {
+      sessionStorage.removeItem('triovault_tab_unlocked');
       setIsAuthenticated(false);
     };
 
     window.addEventListener('vault:unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('vault:unauthorized', handleUnauthorized);
-  }, [checkSession]);
+
+    // Track user activity to prevent premature lock while actively working
+    const handleActivity = () => {
+      if (sessionStorage.getItem('triovault_tab_unlocked') === 'true') {
+        resetIdleTimer();
+      }
+    };
+
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+    window.addEventListener('scroll', handleActivity);
+
+    return () => {
+      window.removeEventListener('vault:unauthorized', handleUnauthorized);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+      window.removeEventListener('scroll', handleActivity);
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+    };
+  }, [checkSession, resetIdleTimer]);
 
   const unlock = async (password) => {
     try {
       const res = await authApi.unlock(password);
       if (res.data?.success) {
+        sessionStorage.setItem('triovault_tab_unlocked', 'true');
         setIsAuthenticated(true);
+        resetIdleTimer();
         return { success: true };
       }
       return { success: false, message: res.data?.message || 'Unlock failed' };
@@ -54,12 +106,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const lock = async () => {
+    sessionStorage.removeItem('triovault_tab_unlocked');
+    setIsAuthenticated(false);
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+    }
     try {
       await authApi.lock();
     } catch (err) {
       console.warn('Error during lock request:', err);
-    } finally {
-      setIsAuthenticated(false);
     }
   };
 
@@ -77,3 +132,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

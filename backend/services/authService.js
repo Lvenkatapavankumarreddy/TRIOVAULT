@@ -56,9 +56,10 @@ export const getCookieOptions = () => {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    // Omit maxAge: Browser session cookie destroyed immediately on browser close
     path: '/',
   };
 };
 
 export { SESSION_COOKIE_NAME };
+

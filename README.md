@@ -180,3 +180,4 @@ Open [http://localhost:5173](http://localhost:5173) in your browser. Enter the m
 5. Output Directory: `dist`
 6. Add Environment Variable:
    - `VITE_API_URL`: Your Render backend URL (e.g., `https://triovault-backend.onrender.com/api`).
+

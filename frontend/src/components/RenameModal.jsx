@@ -117,3 +117,4 @@ export const RenameModal = ({ isOpen, onClose, file, onRenameSuccess }) => {
     </div>
   );
 };
+

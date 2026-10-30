@@ -235,3 +235,4 @@ export const FilePreviewModal = ({ isOpen, onClose, file }) => {
     </div>
   );
 };
+

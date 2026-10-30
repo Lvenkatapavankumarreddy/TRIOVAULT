@@ -272,3 +272,4 @@ export const AnalyticsPage = () => {
     </div>
   );
 };
+

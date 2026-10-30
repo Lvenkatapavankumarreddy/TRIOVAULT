@@ -86,3 +86,4 @@ export const DeleteConfirmModal = ({ isOpen, onClose, file, onDeleteSuccess }) =
     </div>
   );
 };
+

@@ -12,3 +12,4 @@ router.get('/:folderId', getFolderById);
 router.get('/:folderId/stats', getFolderStats);
 
 export default router;
+

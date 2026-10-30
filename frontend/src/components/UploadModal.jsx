@@ -250,3 +250,4 @@ export const UploadModal = ({ isOpen, onClose, folderId, folderName, onUploadSuc
     </div>
   );
 };
+

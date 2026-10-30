@@ -48,3 +48,4 @@ export const getFolderActivities = async (req, res) => {
     });
   }
 };
+

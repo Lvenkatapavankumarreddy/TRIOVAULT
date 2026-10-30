@@ -10,3 +10,4 @@ router.get('/', getActivities);
 router.get('/:folderId', getFolderActivities);
 
 export default router;
+

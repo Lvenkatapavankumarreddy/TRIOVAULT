@@ -99,3 +99,4 @@ export const getSessionStatus = async (req, res) => {
     expiresAt: new Date(payload.exp * 1000),
   });
 };
+
