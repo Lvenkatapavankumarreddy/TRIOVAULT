@@ -147,7 +147,7 @@ export const UploadModal = ({ isOpen, onClose, folderId, folderName, onUploadSuc
               Drag & drop files here, or <span className="text-blue-600 dark:text-blue-400 underline">browse</span>
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Supports Images, Documents, Videos, Archives (up to 50MB per file)
+              Supports Images, Documents, Videos, Archives (up to 500MB per file)
             </p>
           </div>
 

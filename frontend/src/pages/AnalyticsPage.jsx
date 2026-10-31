@@ -257,7 +257,7 @@ export const AnalyticsPage = () => {
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400 space-y-1">
-                  <p>• Max single file upload: 50MB</p>
+                  <p>• Max single file upload: 500MB</p>
                   <p>• Real-time synchronization active</p>
                   <p>• Zero public bucket exposure</p>
                 </div>
