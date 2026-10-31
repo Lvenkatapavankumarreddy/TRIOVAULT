@@ -1,12 +1,17 @@
 import { verifySessionToken, SESSION_COOKIE_NAME } from '../services/authService.js';
 
 export const requireAuth = (req, res, next) => {
-  // Check cookie first
+  // 1. Check HTTP-only cookie
   let token = req.cookies?.[SESSION_COOKIE_NAME];
 
-  // Optional Authorization header fallback
+  // 2. Check Authorization header (Bearer token)
   if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
+  }
+
+  // 3. Check query parameter token (for cross-domain <img>, <video>, <iframe>, downloads)
+  if (!token && req.query.token) {
+    token = req.query.token;
   }
 
   if (!token) {

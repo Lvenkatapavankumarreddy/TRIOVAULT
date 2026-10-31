@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }) => {
     idleTimerRef.current = setTimeout(() => {
       // Auto lock on inactivity
       sessionStorage.removeItem('triovault_tab_unlocked');
+      sessionStorage.removeItem('triovault_token');
       setIsAuthenticated(false);
       authApi.lock().catch(() => {});
     }, INACTIVITY_TIMEOUT_MS);
@@ -28,7 +29,9 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
       // Require unlock per visit: if not unlocked in this active tab session, prompt for password
       const tabUnlocked = sessionStorage.getItem('triovault_tab_unlocked') === 'true';
-      if (!tabUnlocked) {
+      const token = sessionStorage.getItem('triovault_token');
+
+      if (!tabUnlocked || !token) {
         setIsAuthenticated(false);
         setIsLoading(false);
         return;
@@ -40,10 +43,12 @@ export const AuthProvider = ({ children }) => {
         resetIdleTimer();
       } else {
         sessionStorage.removeItem('triovault_tab_unlocked');
+        sessionStorage.removeItem('triovault_token');
         setIsAuthenticated(false);
       }
     } catch (err) {
       sessionStorage.removeItem('triovault_tab_unlocked');
+      sessionStorage.removeItem('triovault_token');
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
@@ -56,6 +61,7 @@ export const AuthProvider = ({ children }) => {
     // Listen for custom 401 unauth events from api interceptor
     const handleUnauthorized = () => {
       sessionStorage.removeItem('triovault_tab_unlocked');
+      sessionStorage.removeItem('triovault_token');
       setIsAuthenticated(false);
     };
 
@@ -90,6 +96,9 @@ export const AuthProvider = ({ children }) => {
       const res = await authApi.unlock(password);
       if (res.data?.success) {
         sessionStorage.setItem('triovault_tab_unlocked', 'true');
+        if (res.data.token) {
+          sessionStorage.setItem('triovault_token', res.data.token);
+        }
         setIsAuthenticated(true);
         resetIdleTimer();
         return { success: true };
@@ -107,6 +116,7 @@ export const AuthProvider = ({ children }) => {
 
   const lock = async () => {
     sessionStorage.removeItem('triovault_tab_unlocked');
+    sessionStorage.removeItem('triovault_token');
     setIsAuthenticated(false);
     if (idleTimerRef.current) {
       clearTimeout(idleTimerRef.current);

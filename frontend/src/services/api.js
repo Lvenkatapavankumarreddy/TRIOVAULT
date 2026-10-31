@@ -8,6 +8,15 @@ const api = axios.create({
   },
 });
 
+// Interceptor to attach Bearer token for cross-domain support
+api.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem('triovault_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Interceptor to handle session expiration cleanly
 api.interceptors.response.use(
   (response) => response,

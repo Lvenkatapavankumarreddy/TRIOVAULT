@@ -43,6 +43,7 @@ export const unlockVault = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Vault unlocked successfully.',
+      token,
     });
   } catch (error) {
     console.error('Unlock error:', error);

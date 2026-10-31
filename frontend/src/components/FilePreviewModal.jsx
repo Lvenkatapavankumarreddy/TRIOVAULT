@@ -20,7 +20,8 @@ export const FilePreviewModal = ({ isOpen, onClose, file }) => {
   const [loadError, setLoadError] = useState(false);
   const toast = useToast();
 
-  const previewUrl = file ? `/api/files/${file.fileId}/preview` : '';
+  const token = sessionStorage.getItem('triovault_token');
+  const previewUrl = file ? `/api/files/${file.fileId}/preview${token ? `?token=${encodeURIComponent(token)}` : ''}` : '';
 
   // Determine file type characteristics
   const lowerName = file?.originalName?.toLowerCase() || '';
@@ -69,7 +70,8 @@ export const FilePreviewModal = ({ isOpen, onClose, file }) => {
 
   const handleDownload = () => {
     toast.success(`Starting download for ${file.originalName}`);
-    window.location.href = `/api/files/${file.fileId}/download`;
+    const token = sessionStorage.getItem('triovault_token');
+    window.location.href = `/api/files/${file.fileId}/download${token ? `?token=${encodeURIComponent(token)}` : ''}`;
   };
 
   const renderContent = () => {

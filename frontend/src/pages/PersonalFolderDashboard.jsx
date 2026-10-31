@@ -137,7 +137,9 @@ export const PersonalFolderDashboard = () => {
       if (res.data?.downloadUrl) {
         window.open(res.data.downloadUrl, '_blank');
       } else {
-        window.location.href = `/api/files/${file.fileId}/download`;
+        const token = sessionStorage.getItem('triovault_token');
+        const base = import.meta.env.VITE_API_URL || '/api';
+        window.location.href = `${base}/files/${file.fileId}/download${token ? `?token=${encodeURIComponent(token)}` : ''}`;
       }
       toast.success(`Downloading ${file.originalName}`);
     } catch (err) {
