@@ -13,21 +13,21 @@ const memoryStore = {
 export const PREDEFINED_FOLDERS = [
   {
     folderId: 'folder-pavan',
-    folderName: 'L.V.pavan kumar reddy',
+    folderName: 'L.Venkata Pavan Kumar Reddy',
     description: 'Personal secure cloud storage',
     avatar: 'LV',
     themeColor: 'blue',
   },
   {
     folderId: 'folder-haricharan',
-    folderName: 'D.hari charan sai vagnash',
+    folderName: 'D.Hari Charan Sai Vignesh',
     description: 'Personal secure cloud storage',
     avatar: 'DH',
     themeColor: 'emerald',
   },
   {
     folderId: 'folder-deepak',
-    folderName: 'K.deepak kumar',
+    folderName: 'K.Deepak Kumar',
     description: 'Personal secure cloud storage',
     avatar: 'KD',
     themeColor: 'amber',
@@ -66,18 +66,22 @@ export const dbService = {
           if (!exists) {
             await Folder.create(item);
             console.log(`[TrioVault] Initialized folder: ${item.folderName} (${item.folderId})`);
+          } else if (exists.folderName !== item.folderName) {
+            await Folder.updateOne(
+              { folderId: item.folderId },
+              { $set: { folderName: item.folderName } }
+            );
+            console.log(`[TrioVault] Updated folder name to: ${item.folderName} (${item.folderId})`);
           }
         } catch (e) {
-          console.error(`Error checking/creating folder ${item.folderId} in MongoDB:`, e.message);
+          console.error(`Error checking/updating folder ${item.folderId} in MongoDB:`, e.message);
         }
       }
-      if (!memoryStore.folders.has(item.folderId)) {
-        memoryStore.folders.set(item.folderId, {
-          ...item,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-      }
+      memoryStore.folders.set(item.folderId, {
+        ...item,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     }
   },
 

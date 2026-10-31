@@ -6,9 +6,9 @@
 
 ## 👥 The Three Predefined Spaces
 Upon application initialization, TrioVault automatically creates and links three permanent folders:
-1. **`L.V.pavan kumar reddy`** (`folder-pavan`)
-2. **`D.hari charan sai vagnash`** (`folder-haricharan`)
-3. **`K.deepak kumar`** (`folder-deepak`)
+1. **`L.Venkata Pavan Kumar Reddy`** (`folder-pavan`)
+2. **`D.Hari Charan Sai Vignesh`** (`folder-haricharan`)
+3. **`K.Deepak Kumar`** (`folder-deepak`)
 
 Each folder maintains strict file isolation, independent storage calculations, and separate activity logs.
 
