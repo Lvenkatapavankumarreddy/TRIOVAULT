@@ -261,13 +261,16 @@ export const previewFile = async (req, res) => {
           'supabase'
         );
         if (signedUrl) {
-          return res.status(200).json({
-            success: true,
-            previewUrl: signedUrl,
-            mimeType: file.mimeType,
-            fileType: file.fileType,
-            originalName: file.originalName,
-          });
+          if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.status(200).json({
+              success: true,
+              previewUrl: signedUrl,
+              mimeType: file.mimeType,
+              fileType: file.fileType,
+              originalName: file.originalName,
+            });
+          }
+          return res.redirect(signedUrl);
         }
       } catch (e) {
         console.warn('Supabase preview URL generation error:', e.message);
@@ -277,7 +280,20 @@ export const previewFile = async (req, res) => {
     // Local stream inline preview
     const localPath = storageService.getLocalFilePath(file.storagePath);
     if (fs.existsSync(localPath)) {
-      res.setHeader('Content-Type', file.mimeType || 'application/octet-stream');
+      // Determine content type
+      let contentType = file.mimeType || 'application/octet-stream';
+      const lowerName = file.originalName.toLowerCase();
+      if (lowerName.endsWith('.pdf')) contentType = 'application/pdf';
+      else if (lowerName.endsWith('.png')) contentType = 'image/png';
+      else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) contentType = 'image/jpeg';
+      else if (lowerName.endsWith('.svg')) contentType = 'image/svg+xml';
+      else if (lowerName.endsWith('.webp')) contentType = 'image/webp';
+      else if (lowerName.endsWith('.gif')) contentType = 'image/gif';
+      else if (lowerName.endsWith('.mp4')) contentType = 'video/mp4';
+      else if (lowerName.endsWith('.webm')) contentType = 'video/webm';
+      else if (lowerName.endsWith('.txt') || lowerName.endsWith('.md') || lowerName.endsWith('.log')) contentType = 'text/plain; charset=utf-8';
+
+      res.setHeader('Content-Type', contentType);
       res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(file.originalName)}"`);
       return fs.createReadStream(localPath).pipe(res);
     }
