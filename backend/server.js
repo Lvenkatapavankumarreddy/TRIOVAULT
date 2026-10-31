@@ -35,8 +35,16 @@ app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
     contentSecurityPolicy: false, // Allows inline previews for PDFs/images
+    frameguard: false, // Disables X-Frame-Options so iframe previews can be embedded cross-domain
   })
 );
+
+// Ensure cross-domain embedding is explicitly allowed for previews
+app.use((req, res, next) => {
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', "frame-ancestors *");
+  next();
+});
 
 // 2. CORS configuration
 const allowedOrigins = [
@@ -64,7 +72,16 @@ app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 app.use(cookieParser());
 
-// 4. API Health Check
+// Root & Health Checks
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    service: 'TrioVault Backend API',
+    status: 'online',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',

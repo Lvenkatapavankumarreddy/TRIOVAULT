@@ -295,6 +295,9 @@ export const previewFile = async (req, res) => {
 
       res.setHeader('Content-Type', contentType);
       res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(file.originalName)}"`);
+      res.removeHeader('X-Frame-Options');
+      res.setHeader('Content-Security-Policy', "frame-ancestors *");
+      res.setHeader('Access-Control-Allow-Origin', '*');
       return fs.createReadStream(localPath).pipe(res);
     }
 
