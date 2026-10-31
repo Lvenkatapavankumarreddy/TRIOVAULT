@@ -20,8 +20,10 @@ export const FilePreviewModal = ({ isOpen, onClose, file }) => {
   const [loadError, setLoadError] = useState(false);
   const toast = useToast();
 
+  const apiBase = import.meta.env.VITE_API_URL || '/api';
+  const cleanBase = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
   const token = sessionStorage.getItem('triovault_token');
-  const previewUrl = file ? `/api/files/${file.fileId}/preview${token ? `?token=${encodeURIComponent(token)}` : ''}` : '';
+  const previewUrl = file ? `${cleanBase}/files/${file.fileId}/preview${token ? `?token=${encodeURIComponent(token)}` : ''}` : '';
 
   // Determine file type characteristics
   const lowerName = file?.originalName?.toLowerCase() || '';
@@ -71,7 +73,9 @@ export const FilePreviewModal = ({ isOpen, onClose, file }) => {
   const handleDownload = () => {
     toast.success(`Starting download for ${file.originalName}`);
     const token = sessionStorage.getItem('triovault_token');
-    window.location.href = `/api/files/${file.fileId}/download${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const cleanBase = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
+    window.location.href = `${cleanBase}/files/${file.fileId}/download${token ? `?token=${encodeURIComponent(token)}` : ''}`;
   };
 
   const renderContent = () => {

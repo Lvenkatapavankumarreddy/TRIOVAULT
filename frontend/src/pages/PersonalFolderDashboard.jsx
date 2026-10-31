@@ -138,8 +138,9 @@ export const PersonalFolderDashboard = () => {
         window.open(res.data.downloadUrl, '_blank');
       } else {
         const token = sessionStorage.getItem('triovault_token');
-        const base = import.meta.env.VITE_API_URL || '/api';
-        window.location.href = `${base}/files/${file.fileId}/download${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+        const apiBase = import.meta.env.VITE_API_URL || '/api';
+        const cleanBase = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
+        window.location.href = `${cleanBase}/files/${file.fileId}/download${token ? `?token=${encodeURIComponent(token)}` : ''}`;
       }
       toast.success(`Downloading ${file.originalName}`);
     } catch (err) {
