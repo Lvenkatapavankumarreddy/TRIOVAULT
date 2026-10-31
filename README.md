@@ -102,7 +102,7 @@ MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/triovault?r
 SUPABASE_URL=https://<your-project-id>.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_secret_key
 SUPABASE_BUCKET=triovault-files
-MAX_FILE_SIZE_MB=500
+MAX_FILE_SIZE_MB=50
 ```
 
 > **Note on Local Testing**: If `SUPABASE_URL` or `MONGODB_URI` are omitted during initial offline testing, TrioVault automatically uses local fallback storage in `./uploads` and its high-availability in-memory replica store, allowing immediate full-featured operation without configuration blockers!
