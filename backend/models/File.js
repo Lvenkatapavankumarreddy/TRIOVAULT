@@ -22,8 +22,11 @@ const fileSchema = new mongoose.Schema({
   },
   storageProvider: {
     type: String,
-    enum: ['supabase', 'local'],
-    default: 'supabase',
+    enum: ['supabase', 'local', 'gridfs'],
+    default: 'gridfs',
+  },
+  gridFsId: {
+    type: mongoose.Schema.Types.ObjectId,
   },
   mimeType: {
     type: String,

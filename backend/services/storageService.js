@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
 import { getSupabaseClient, isSupabaseConfigured, SUPABASE_BUCKET } from '../config/supabase.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -12,51 +13,109 @@ if (!fs.existsSync(LOCAL_UPLOADS_DIR)) {
   fs.mkdirSync(LOCAL_UPLOADS_DIR, { recursive: true });
 }
 
+let gridFsBucket = null;
+
 export const storageService = {
   /**
-   * Upload file to Supabase Storage (or fallback to local disk)
+   * Returns active GridFSBucket instance if MongoDB is connected
    */
-  async uploadFile({ folderId, storedFileName, buffer, mimeType }) {
-    const storagePath = `${folderId}/${storedFileName}`;
-
-    if (isSupabaseConfigured()) {
-      const supabase = getSupabaseClient();
-      const { data, error } = await supabase.storage
-        .from(SUPABASE_BUCKET)
-        .upload(storagePath, buffer, {
-          contentType: mimeType,
-          upsert: false,
+  getGridFSBucket() {
+    if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.connection.db) {
+      if (!gridFsBucket) {
+        gridFsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+          bucketName: 'vault_files',
         });
-
-      if (error) {
-        console.error('[TrioVault Storage] Supabase upload failed:', error.message);
-        throw new Error(`Cloud storage upload failed: ${error.message}`);
       }
-
-      return {
-        storageProvider: 'supabase',
-        storagePath: data.path,
-      };
-    } else {
-      // Local fallback
-      const targetDir = path.join(LOCAL_UPLOADS_DIR, folderId);
-      if (!fs.existsSync(targetDir)) {
-        fs.mkdirSync(targetDir, { recursive: true });
-      }
-      const localFilePath = path.join(targetDir, storedFileName);
-      await fs.promises.writeFile(localFilePath, buffer);
-
-      return {
-        storageProvider: 'local',
-        storagePath,
-      };
+      return gridFsBucket;
     }
+    return null;
   },
 
   /**
-   * Delete file from Supabase Storage (or local disk)
+   * Upload file to Supabase Storage, MongoDB GridFS, or local disk fallback
    */
-  async deleteFile(storagePath, storageProvider = 'supabase') {
+  async uploadFile({ folderId, storedFileName, buffer, mimeType, originalName, fileId }) {
+    const storagePath = `${folderId}/${storedFileName}`;
+
+    // 1. Supabase Storage (if configured by user)
+    if (isSupabaseConfigured()) {
+      try {
+        const supabase = getSupabaseClient();
+        const { data, error } = await supabase.storage
+          .from(SUPABASE_BUCKET)
+          .upload(storagePath, buffer, {
+            contentType: mimeType,
+            upsert: false,
+          });
+
+        if (!error && data?.path) {
+          return {
+            storageProvider: 'supabase',
+            storagePath: data.path,
+          };
+        }
+        console.warn('[TrioVault Storage] Supabase upload failed, falling back to GridFS:', error?.message);
+      } catch (err) {
+        console.warn('[TrioVault Storage] Supabase exception, falling back to GridFS:', err.message);
+      }
+    }
+
+    // 2. MongoDB GridFS Storage (Permanent cloud storage in Atlas cluster)
+    const bucket = this.getGridFSBucket();
+    if (bucket) {
+      try {
+        const uploadResult = await new Promise((resolve, reject) => {
+          const uploadStream = bucket.openUploadStream(storedFileName, {
+            contentType: mimeType,
+            metadata: {
+              folderId,
+              originalName: originalName || storedFileName,
+              fileId: fileId || '',
+              storagePath,
+            },
+          });
+
+          uploadStream.on('error', (err) => {
+            console.error('[TrioVault Storage] GridFS stream error:', err.message);
+            reject(err);
+          });
+
+          uploadStream.on('finish', (uploadedFile) => {
+            resolve({
+              storageProvider: 'gridfs',
+              storagePath: storedFileName,
+              gridFsId: uploadedFile._id,
+            });
+          });
+
+          uploadStream.end(buffer);
+        });
+
+        console.log(`[TrioVault Storage] Saved file permanently to MongoDB Atlas GridFS: ${storedFileName}`);
+        return uploadResult;
+      } catch (gridFsError) {
+        console.warn('[TrioVault Storage] GridFS write failed, falling back to local storage:', gridFsError.message);
+      }
+    }
+
+    // 3. Local disk fallback
+    const targetDir = path.join(LOCAL_UPLOADS_DIR, folderId);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    const localFilePath = path.join(targetDir, storedFileName);
+    await fs.promises.writeFile(localFilePath, buffer);
+
+    return {
+      storageProvider: 'local',
+      storagePath,
+    };
+  },
+
+  /**
+   * Delete file from Supabase, GridFS, or local disk
+   */
+  async deleteFile(storagePath, storageProvider = 'gridfs', gridFsId = null) {
     if (storageProvider === 'supabase' && isSupabaseConfigured()) {
       const supabase = getSupabaseClient();
       const { error } = await supabase.storage
@@ -66,25 +125,44 @@ export const storageService = {
       if (error) {
         console.warn(`[TrioVault Storage] Cloud delete error for ${storagePath}:`, error.message);
       }
-    } else {
-      const localFilePath = path.join(LOCAL_UPLOADS_DIR, storagePath);
-      if (fs.existsSync(localFilePath)) {
+      return;
+    }
+
+    if (storageProvider === 'gridfs') {
+      const bucket = this.getGridFSBucket();
+      if (bucket) {
         try {
-          await fs.promises.unlink(localFilePath);
+          if (gridFsId) {
+            await bucket.delete(new mongoose.Types.ObjectId(gridFsId));
+          } else {
+            const files = await bucket.find({ filename: storagePath }).toArray();
+            for (const f of files) {
+              await bucket.delete(f._id);
+            }
+          }
         } catch (e) {
-          console.warn(`[TrioVault Storage] Local file delete error: ${e.message}`);
+          console.warn(`[TrioVault Storage] GridFS delete error for ${storagePath}:`, e.message);
         }
+      }
+      return;
+    }
+
+    const localFilePath = path.join(LOCAL_UPLOADS_DIR, storagePath);
+    if (fs.existsSync(localFilePath)) {
+      try {
+        await fs.promises.unlink(localFilePath);
+      } catch (e) {
+        console.warn(`[TrioVault Storage] Local file delete error: ${e.message}`);
       }
     }
   },
 
   /**
-   * Generate short-lived signed URL or streaming resource for file download/preview
+   * Generate short-lived signed URL for Supabase download
    */
   async getFileAccessUrl(storagePath, originalName, storageProvider = 'supabase') {
     if (storageProvider === 'supabase' && isSupabaseConfigured()) {
       const supabase = getSupabaseClient();
-      // 5-minute signed URL
       const { data, error } = await supabase.storage
         .from(SUPABASE_BUCKET)
         .createSignedUrl(storagePath, 300, {
@@ -96,8 +174,6 @@ export const storageService = {
       }
       return data.signedUrl;
     }
-
-    // Local fallback route
     return null;
   },
 
@@ -108,4 +184,3 @@ export const storageService = {
     return path.join(LOCAL_UPLOADS_DIR, storagePath);
   }
 };
-
