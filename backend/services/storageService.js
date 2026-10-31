@@ -75,16 +75,18 @@ export const storageService = {
             },
           });
 
+          const streamId = uploadStream.id;
+
           uploadStream.on('error', (err) => {
             console.error('[TrioVault Storage] GridFS stream error:', err.message);
             reject(err);
           });
 
-          uploadStream.on('finish', (uploadedFile) => {
+          uploadStream.on('finish', () => {
             resolve({
               storageProvider: 'gridfs',
               storagePath: storedFileName,
-              gridFsId: uploadedFile._id,
+              gridFsId: streamId,
             });
           });
 

@@ -87,7 +87,7 @@ export const UploadModal = ({ isOpen, onClose, folderId, folderName, onUploadSuc
       }
     } catch (err) {
       console.error('Upload failure:', err);
-      const msg = err.response?.data?.message || 'File upload failed. Check connection or size.';
+      const msg = err.response?.data?.message || err.message || 'File upload failed. Check connection or size.';
       setErrorMsg(msg);
       toast.error(msg);
     } finally {
